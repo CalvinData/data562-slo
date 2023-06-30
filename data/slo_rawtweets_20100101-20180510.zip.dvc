@@ -1,0 +1,5 @@
+outs:
+- md5: 174569bc2dac7c5899be8fbf53f8d943
+  size: 367311407
+  hash: md5
+  path: slo_rawtweets_20100101-20180510.zip

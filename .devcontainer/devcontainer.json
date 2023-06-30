@@ -1,0 +1,7 @@
+{
+	"name": "slo",
+	"build": {
+		"context": "..",
+		"dockerfile": "Dockerfile"
+	}
+}
