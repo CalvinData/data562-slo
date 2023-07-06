@@ -1,0 +1,5 @@
+outs:
+- md5: 4586d92252092d729d943adcb1a0d74a
+  size: 3701059566
+  hash: md5
+  path: slo_rawtweets_20100101-20180510.json
