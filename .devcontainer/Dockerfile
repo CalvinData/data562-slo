@@ -26,6 +26,13 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
+# Polyglot has an installation-order issue with icu, so install these manually rather than just
+# listing them requirements.txt.
+# See: https://stackoverflow.com/questions/64886067/polyglot-importerror-cannot-import-name-locale-from-icu
+RUN pip install pyicu \
+    && pip install pycld2 \
+    && pip install morfessor \
+    && pip install polyglot
 
 # Add some development (only) tools.
 RUN echo "alias ll='ls -lahF'" >> /home/$USERNAME/.bashrc \

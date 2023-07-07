@@ -2,12 +2,12 @@
 
 This sample analytics project is distributed for use by students of DATA 562 at Calvin University. It is based on the SLO application built at [CSIRO/Data61](https://research.csiro.au/data61/) between 2015-2020 ([Xu et al, COLING-2020, industry track](https://aclanthology.org/2020.coling-industry.14/)).
 
-The project deployed a public-stance monitoring application what watched the Twitter feed for comments on Australian mining companies. The goal was to help the companies know what their public stakeholders were saying about them so that they could take appropriate actions in response. 
+The project deployed a public-stance monitoring application what watched the Twitter feed for comments on Australian mining companies. The goal was to help the companies know what their public stakeholders were saying about them so that they could take appropriate actions in response.
 
 For details, see the project:
 
 - [Vision Statement](vision.ipynb)
 - [Time Tracker](https://app.clockify.me/workspaces/649f2bd325d4ee229253c053)
-- [Data Lake](https://drive.google.com/drive/u/1/folders/1te6TeLQ7Uq0-JzBbiBINytPkH7yCqy1b)
+- [Data Storage](https://drive.google.com/drive/u/1/folders/1te6TeLQ7Uq0-JzBbiBINytPkH7yCqy1b)
 
 To start the development container specified in `.devcontainer`, either create a Codespace on GitHub or run VSCode Command&rarr;&ldquo;Dev Container: Rebuild Container&rdquo; locally.

@@ -3,5 +3,29 @@
 	"build": {
 		"context": "..",
 		"dockerfile": "Dockerfile"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"njpwerner.autodocstring",
+				"ms-python.black-formatter",
+				"streetsidesoftware.code-spell-checker",
+				"GitHub.copilot",
+				"mikestead.dotenv",
+				"iterative.dvc",
+				"donjayamanne.git-extension-pack",
+				"oderwat.indent-rainbow",
+				"ms-toolsai.jupyter",
+				"euskadi31.json-pretty-printer",
+				"christian-kohler.path-intellisense",
+				"mohsen1.prettify-json",
+				"ms-python.python",
+				"ms-python.pylint",
+				"mechatroner.rainbow-csv",
+				"shardulm94.trailing-spaces",
+				"DavidAnson.vscode-markdownlint",
+				"ms-python.vscode-pylance"
+			]
+		}
 	}
 }
