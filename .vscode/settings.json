@@ -3,6 +3,7 @@
         "adani",
         "Anson",
         "autodocstring",
+        "cashtags",
         "chunksize",
         "CSIRO",
         "dataframe",
@@ -17,6 +18,8 @@
         "pylance",
         "rawtweet",
         "rawtweets",
+        "regexs",
+        "runtagger",
         "shardulm",
         "toolsai"
     ]

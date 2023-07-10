@@ -14,10 +14,10 @@ neutral_usernames = [
 PTN_neutral_screennames = re.compile('|'.join(neutral_usernames))
 
 PTN_company_usernames = re.compile('|'.join([
-    'adaniaustralia', 
-    'bhp', 
-    'santosltd', 
-    'fortescuenews', 
+    'adaniaustralia',
+    'bhp',
+    'santosltd',
+    'fortescuenews',
     'riotinto'
     ]))
 
@@ -74,7 +74,6 @@ PTN_against = {
         ]))
 }
 
-
 # patterns that identify individual companies
 PTN_companies = [
     ('adani', re.compile(r'adani'), 'adaniaustralia'),
@@ -101,8 +100,12 @@ PTN_whitespace = re.compile(r'\s')
 PTN_elongation = re.compile(r'(.)\1{2,}')
 PTN_year = re.compile(r'[12][0-9]{3}')
 PTN_time = re.compile(r'[012]?[0-9]:[0-5][0-9]')
-# https://stackoverflow.com/a/13848829
+# See: https://stackoverflow.com/a/13848829
 PTN_cash = re.compile(r'\$(?=\(.*\)|[^()]*$)\(?\d{1,3}(,?\d{3})?(\.\d\d?)?\)?([bmk]| hundred| thousand| million| billion)?')
 
-# This regex identifies the UTF-8 characters and mess up Polyglot/cld2.
+# This regex identifies the UTF-8 characters that mess up Polyglot/cld2.
 REGEX_BAD_CHARS = regex.compile(r"[\p{Cc}\p{Cs}]+")
+
+# Pre-defined identifiers for some abstracted content sub-strings
+SLO_MENTION_PLACEHOLDER = r'slo_mention'
+SLO_URL_PLACEHOLDER = r'slo_url'
