@@ -25,9 +25,24 @@ PTN_company_usernames = re.compile('|'.join([
 company_list = [
     'adani',
     'bhp',
-    'santos',
-    'riotinto',
     'fortescue',
+    'riotinto',
+    'santos',
+]
+
+# List of companies in the raw tweet data
+full_company_list = [
+    'adani',
+    'bhp',
+    'cuesta',
+    'fortescue',
+    'iluka',
+    'newmont',
+    'oilsearch',
+    'riotinto',
+    'santos',
+    'whitehaven',
+    'woodside',
 ]
 
 # Regular expression pattern dictionary for each company of all stance-for search patterns
