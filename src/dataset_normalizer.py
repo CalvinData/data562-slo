@@ -101,16 +101,14 @@ def fix_for_tagger(texts):
 
 
 def dataset_normalizer(
-        dataset_path='.',
-        dataset_filename='dataset.csv',
+        dataset_path: str='.',
+        input_filename: str='dataset.csv',
+        output_filename: str='dataset_norm.csv',
         tweet_column_name: str='text',
-        profile_column_name='user_description',
+        profile_column_name: str='user_description',
         encoding: str='utf-8',
         separate_companies: bool=False,
-        post_process: bool=False,
-        logging_level: int=logging.INFO,
-        logging_filename='dataset_normalizer_log.txt',
-        logging_mode='w'
+        post_process: bool=False
         ) -> None:
     """This tool loads the preprocessed CSV-formatted tweets from the given
     filepath, normalizes the field values, and saves the results in a new
@@ -162,19 +160,13 @@ def dataset_normalizer(
         logging_mode -- the mode to use when writing to the log file
             (default: 'w')
     """
-    logging.basicConfig(
-        level=logging_level,
-        format='%(message)s',
-        filename=Path(dataset_path, logging_filename),
-        filemode=logging_mode
-        )
     logger.info('normalizing dataset...')
 
-    dataset_filepath = Path(dataset_path, dataset_filename)
-    filename, extension = dataset_filename.split('.')
-    output_filepath = Path(dataset_path, f'{filename}_norm.csv')
+    _, extension = input_filename.split('.')
+    input_filepath = Path(dataset_path, input_filename)
+    output_filepath = Path(dataset_path, output_filename)
 
-    data_frame = read_dataset(dataset_filepath, extension, encoding)
+    data_frame = read_dataset(input_filepath, extension, encoding)
 
     logger.info('\tpre-processing tweet/profile texts...')
     tweets = data_frame[tweet_column_name].apply(preprocess_text)
@@ -182,16 +174,6 @@ def dataset_normalizer(
     data_frame = data_frame.drop(
         columns=[tweet_column_name, profile_column_name]
         )
-
-    # logger.info(f'\tparsing/tagging tweets...')
-    # tagged = Tagger.runtagger_parse(fix_for_tagger(tweets))
-    # tweets = pd.Series([
-    #     ' '.join([w for w, pos, p in row]) for row in tagged
-    # ])
-    # tagged = Tagger.runtagger_parse(fix_for_tagger(profiles))
-    # profiles = pd.Series([
-    #     ' '.join([w for w, pos, p in row]) for row in tagged
-    # ])
 
     if post_process:
         logger.info('\tpost-processing tweets...')

@@ -251,14 +251,12 @@ def create_separate_company_datasets(input_filepath, output_path, filename_base)
 
 def dataset_preprocessor(
         dataset_path='.',
-        dataset_filename='dataset.json',
+        input_filename='dataset.json',
+        output_filename='dataset.csv',
         encoding='utf-8',
         drop_irrelevant_tweets=True,
         keep_retweets=True,
-        add_company_datasets=False,
-        logging_level=logging.INFO,
-        logging_filename='dataset_preprocessor_log.txt',
-        logging_mode='w'
+        add_company_datasets=False
         ):
     """This tool loads the raw JSON-formatted tweets from the given
     filepath, does some general updates to the dataset items and saves
@@ -300,22 +298,14 @@ def dataset_preprocessor(
         logging_mode -- the mode to use when writing to the log file
             (default: 'w')
     """
-    logging.basicConfig(
-        level=logging_level,
-        format='%(message)s',
-        filename=Path(dataset_path, logging_filename),
-        filemode=logging_mode
-        )
     logger.info('pre-processing dataset...')
 
-    dataset_filepath = Path(dataset_path, dataset_filename)
-    output_filename_base = dataset_filename.split('.')[0]
-    output_filename = f"{output_filename_base}.csv"
+    input_filepath = Path(dataset_path, input_filename)
     output_filepath = Path(dataset_path, output_filename)
     remove_filepath_if_exists(output_filepath)
 
     create_dataset(
-        dataset_filepath,
+        input_filepath,
         output_filepath,
         encoding,
         drop_irrelevant_tweets,
@@ -324,9 +314,9 @@ def dataset_preprocessor(
 
     if add_company_datasets:
         create_separate_company_datasets(
-            dataset_filepath,
+            input_filepath,
             dataset_path,
-            output_filename_base
+            output_filepath.stem
             )
 
 

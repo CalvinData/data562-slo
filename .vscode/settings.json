@@ -13,6 +13,7 @@
         "figsize",
         "fout",
         "kohler",
+        "levelname",
         "matplotlib",
         "mechatroner",
         "mikestead",
