@@ -118,6 +118,8 @@ PTN_time = re.compile(r'[012]?[0-9]:[0-5][0-9]')
 # See: https://stackoverflow.com/a/13848829
 PTN_cash = re.compile(r'\$(?=\(.*\)|[^()]*$)\(?\d{1,3}(,?\d{3})?(\.\d\d?)?\)?([bmk]| hundred| thousand| million| billion)?')
 
+RETWEET_START = 'RT @'
+
 # This regex identifies the UTF-8 characters that mess up Polyglot/cld2.
 REGEX_BAD_CHARS = regex.compile(r"[\p{Cc}\p{Cs}]+")
 

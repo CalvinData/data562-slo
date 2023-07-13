@@ -2,10 +2,13 @@
 This module implements the core operations of the SLO application
 using a setup based on the original SLO tools and MadeWithML's template.
 """
-import subprocess
 from timeit import default_timer as timer
 from datetime import timedelta
 from pathlib import Path
+
+from src.dataset_preprocessor import dataset_preprocessor
+from src.dataset_normalizer import dataset_normalizer
+from src.token_extractor import token_extractor
 
 # Directories
 BASE_DIR = Path(__file__).parent.absolute()
@@ -14,30 +17,34 @@ SRC_DIR = Path(BASE_DIR, "src")
 
 # Preprocess raw tweet dataset.
 # Notes - to make this work, we needed to:
-# - Convert the raw JSON data UTF-8 (using iconv).
+# - Convert the raw JSON data UTF-8 (using iconv -f latin-1 -t utf-8).
 # - Remove some UTF-8 characters that messed up Polyglot/Cld2
 #   (for details, see dataset_preprocessor#remove_bad_chars.).
 start = timer()
-subprocess.run(
-    [
-        "python",
-        Path(SRC_DIR, "dataset_preprocessor.py"),
-        f"--json_data_filepath={Path(DATA_DIR, 'slo_rawtweets_20100101-20180510.json')}",
-        f"--dataset_path={Path(DATA_DIR)}"
-    ],
-    check=True)
+dataset_preprocessor(
+    dataset_path=DATA_DIR,
+    dataset_filename='test.json',
+    logging_filename='test.json.log'
+    )
 end = timer()
 print(f"dataset_preprocessor: {timedelta(seconds=end-start)}")
 
 # Normalize pre-processed tweet dataset.
 start = timer()
-subprocess.run(
-    [
-        "python",
-        Path(SRC_DIR, "dataset_normalizer.py"),
-        f"--csv_data_filepath={Path(DATA_DIR, 'dataset.csv')}",
-        "--post_process=False"
-    ],
-    check=True)
+dataset_normalizer(
+    dataset_path=DATA_DIR,
+    dataset_filename='dataset.csv',
+    logging_filename='dataset.csv.log'
+    )
 end = timer()
 print(f"dataset_normalizer: {timedelta(seconds=end-start)}")
+
+# Create a tokens-only dataset for building word embeddings.
+start = timer()
+token_extractor(
+    dataset_path=DATA_DIR,
+    dataset_filename='dataset_norm.csv',
+    logging_filename='dataset_norm.csv.log'
+    )
+end = timer()
+print(f"token_extractor: {timedelta(seconds=end-start)}")

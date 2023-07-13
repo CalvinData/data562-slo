@@ -3,7 +3,6 @@ This module builds a dataset file from a JSON file of raw tweets.
 See main() for the details.
 """
 import os
-import sys
 import csv
 import json
 import re
@@ -13,7 +12,7 @@ from fire import Fire
 import pandas as pd
 from polyglot.text import Text
 
-from settings import PTN_rt, PTN_companies, REGEX_BAD_CHARS
+from src.settings import PTN_rt, PTN_companies, RETWEET_START, REGEX_BAD_CHARS
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +20,21 @@ logger = logging.getLogger(__name__)
 __unknown_company_count_global__ = 0
 __non_english_count_global__ = 0
 
-def create_dataset(json_data_filepath, dataset_filepath, encoding, drop_irrelevant_tweets):
+def create_dataset(
+        input_filepath,
+        output_filepath,
+        encoding,
+        drop_irrelevant_tweets,
+        keep_retweets
+        ):
     """This function rebuilds a dataset from the given raw JSON file."""
-    logger.info('\tloading raw tweets from %s', json_data_filepath)
+    logger.info('\tloading raw tweets from %s', input_filepath)
 
     # Load/save the file in chunks.
     count = 0
     include_header = True
     for df_chunk in pd.read_json(
-        json_data_filepath,
+        input_filepath,
         orient='records',
         lines=True,
         chunksize=50000,
@@ -50,6 +55,7 @@ def create_dataset(json_data_filepath, dataset_filepath, encoding, drop_irreleva
 
         # Remove irrelevant tweets (non-English or unknown-company).
         if drop_irrelevant_tweets:
+            logger.info('\t\tdropping non-English/unknown-company tweets...')
             df_chunk = df_chunk[
                 (df_chunk['company'] != '') &
                 (
@@ -57,6 +63,11 @@ def create_dataset(json_data_filepath, dataset_filepath, encoding, drop_irreleva
                     | df_chunk['lang_polyglot'].str.startswith('en')
                 )
                 ]
+
+        # Remove retweets.
+        if not keep_retweets:
+            logger.info('\t\tdropping retweets...')
+            df_chunk = df_chunk[~df_chunk['retweeted']]
 
         # Write each chuck to the combined dataset file.
         required_fields = [
@@ -72,7 +83,7 @@ def create_dataset(json_data_filepath, dataset_filepath, encoding, drop_irreleva
             'user_description'
             ]
         df_chunk[required_fields].to_csv(
-            dataset_filepath,
+            output_filepath,
             index=False,
             quoting=csv.QUOTE_NONNUMERIC,
             mode='a',
@@ -86,20 +97,20 @@ def create_dataset(json_data_filepath, dataset_filepath, encoding, drop_irreleva
         logger.info('\t\tprocessed %s records...', count)
 
     # Adding na_filter here to ensure that empty strings are not converted to NaN.
-    df_full = pd.read_csv(dataset_filepath, na_filter=False)
+    df_full = pd.read_csv(output_filepath, na_filter=False)
     df_full.drop_duplicates(inplace=True)
-    df_full.to_csv(dataset_filepath, index=False, header=True, quoting=csv.QUOTE_NONNUMERIC)
+    df_full.to_csv(output_filepath, index=False, header=True, quoting=csv.QUOTE_NONNUMERIC)
     logger.info(
         '\tsaved the dataset to %s' +
         '\n\t\tunknown company count: %s' +
         '\n\t\tnon-English count: %s',
-        dataset_filepath, __unknown_company_count_global__, __non_english_count_global__
+        output_filepath, __unknown_company_count_global__, __non_english_count_global__
         )
 
 
 def compute_retweet(row):
     """This function determines if a tweet is a retweet."""
-    return row['full_text'].startswith('RT')
+    return row['full_text'].startswith(RETWEET_START)
 
 
 def compute_full_text(row):
@@ -112,14 +123,14 @@ def compute_full_text(row):
 
     # If needed, reconstruct the full tweet text from the original text,
     # leaving the retweet header intact.
-    if full_text.startswith('RT @') \
+    if full_text.startswith(RETWEET_START) \
             and full_text.endswith('\u2026') \
             and not pd.isnull(row['retweeted_status']):
         text_header = PTN_rt.search(row['full_text']).group()
         retweet_full_text = pd.read_json(
             json.dumps(row['retweeted_status']['full_text']),
             typ='series'
-            )
+            )[0]
         full_text = f'{text_header}{retweet_full_text}'
 
     return clean_text(full_text)
@@ -226,27 +237,29 @@ def remove_filepath_if_exists(filepath):
         os.remove(filepath)
 
 
-def create_separate_company_datasets(dataset_filepath, dataset_path, filename_base):
+def create_separate_company_datasets(input_filepath, output_path, filename_base):
     """Read the given full/combined dataset file and create/save
     company-specific groups.
     """
     logger.info('\tsplitting dataset into company-specific datasets...')
-    data_frame = pd.read_csv(dataset_filepath, encoding='utf-8', engine='python')
+    data_frame = pd.read_csv(input_filepath, encoding='utf-8', engine='python')
     for company_name, group in data_frame.groupby(['company']):
         group.to_csv(
-            dataset_path / f'{filename_base}-{company_name}.csv',
+            output_path / f'{filename_base}-{company_name}.csv',
             index=False)
 
 
-def main(
-    json_data_filepath='raw_dataset.json',
-    dataset_path='.',
-    filename_base='dataset',
-    encoding='utf-8',
-    drop_irrelevant_tweets=True,
-    add_company_datasets=False,
-    logging_level=logging.INFO,
-    ):
+def dataset_preprocessor(
+        dataset_path='.',
+        dataset_filename='dataset.json',
+        encoding='utf-8',
+        drop_irrelevant_tweets=True,
+        keep_retweets=True,
+        add_company_datasets=False,
+        logging_level=logging.INFO,
+        logging_filename='dataset_preprocessor_log.txt',
+        logging_mode='w'
+        ):
     """This tool loads the raw JSON-formatted tweets from the given
     filepath, does some general updates to the dataset items and saves
     the results in filename (.csv). The columns are modified as
@@ -258,7 +271,8 @@ def main(
             the tweet is dropped.
         - The language in which the tweet is written - The Twitter feed has a language
             column, lang, but it's often wrong. So, we use Polyglot to add a column,
-            lang_polyglot, that we use as a second, often more accurate, opinion.
+            lang_polyglot, that we use as a second, often more accurate, opinion,
+            keeping the tweet if either language field is set to English.
         - The full text of the tweet - We either use the twitter text column or we
             construct the text from the re-tweet information.
         - Hashtags - We add a column with the comma-separated list of hashtags.
@@ -266,47 +280,55 @@ def main(
             profile description.
 
     Keyword Arguments:
-        json_data_filepath -- the system path from which to load the raw JSON files
+        dataset_path -- the system path from which to load the raw JSON files
             (default='.')
-        dataset_path -- the system path to which the dataset files are to be written
-            (default='.')
-        filename_base -- the base name of a/the pre-saved dataset files
-            (default='dataset')
+        dataset_filename -- the name of the input file to read
+            (default='raw_dataset.json')
         encoding -- the file encoding to use
             (default: 'utf-8')
-        add_company_datasets -- whether to add company-specific datasets
+        drop_irrelevant_tweets -- whether to drop tweets that are either:
+            not in English or talk about an unknown company
             (default: True)
+        keep_retweets -- whether to keep retweeted tweets
+            (default: True)
+        add_company_datasets -- whether to add company-specific datasets
+            (default: False)
         logging_level -- the level of logging to use
             (default: logging.INFO)
+        logging_filename -- the name of the log file
+            (default: 'dataset_preprocessor_log.txt')
+        logging_mode -- the mode to use when writing to the log file
+            (default: 'w')
     """
-    logging.basicConfig(level=logging_level, format='%(message)s')
-    logger.info('pre-processing the raw tweets')
+    logging.basicConfig(
+        level=logging_level,
+        format='%(message)s',
+        filename=Path(dataset_path, logging_filename),
+        filemode=logging_mode
+        )
+    logger.info('pre-processing dataset...')
 
-    if not os.path.isfile(json_data_filepath):
-        logger.fatal('\tfilepath doesn\'t exist: %s', json_data_filepath)
-        sys.exit(-1)
-
-    full_dataset_filepath = Path(dataset_path) / f'{filename_base}.csv'
-    remove_filepath_if_exists(full_dataset_filepath)
+    dataset_filepath = Path(dataset_path, dataset_filename)
+    output_filename_base = dataset_filename.split('.')[0]
+    output_filename = f"{output_filename_base}.csv"
+    output_filepath = Path(dataset_path, output_filename)
+    remove_filepath_if_exists(output_filepath)
 
     create_dataset(
-        Path(json_data_filepath),
-        full_dataset_filepath,
+        dataset_filepath,
+        output_filepath,
         encoding,
-        drop_irrelevant_tweets
+        drop_irrelevant_tweets,
+        keep_retweets
         )
 
     if add_company_datasets:
         create_separate_company_datasets(
-            full_dataset_filepath,
-            Path(dataset_path),
-            filename_base
+            dataset_filepath,
+            dataset_path,
+            output_filename_base
             )
 
 
 if __name__ == '__main__':
-    Fire(main)
-    # Example invocation (CSIRO, 2018; chunksize: 100K):
-    # python dataset_processor.py --json_data_filepath=/media/hdd_2/slo/stance/slo-tweets-20160101-20180304/dataset.json --dataset_path=/media/hdd_2/slo/stance/datasets
-    # Example invocation (Calvin, 2023; chunksize: 50K):
-    # /usr/local/bin/python src/dataset_preprocessor.py --json_data_filepath=/workspaces/data562-slo/data/slo_rawtweets_20100101-20180510.json --dataset_path=/workspaces/data562-slo/data
+    Fire(dataset_preprocessor)

@@ -5,14 +5,11 @@ See main() for the details.
 import csv
 import html
 import logging
-
+from pathlib import Path
 from fire import Fire
 import pandas as pd
 
-import settings
-# The CMU Tweet Tagger import and code (below) are commented out for the moment.
-#    The tagger's a big Java utility and it's not clear that it will be useful.
-#from vendor import CMUTweetTagger as Tagger
+import src.settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,31 +18,31 @@ def preprocess_text(text: str) -> str:
     """This function normalizes the tweet field values."""
     try:
         text = html.unescape(text)
-        text = settings.PTN_rt.sub('', text)
-        text = settings.PTN_whitespace.sub(' ', text)
-        text = settings.PTN_concatenated_url.sub(r'\1 http', text)
+        text = src.settings.PTN_rt.sub('', text)
+        text = src.settings.PTN_whitespace.sub(' ', text)
+        text = src.settings.PTN_concatenated_url.sub(r'\1 http', text)
 
         # preserve Twitter specific tokens
         # username can contain year notations and elongations
-        mentions = settings.PTN_mention.findall(text)
-        text = settings.PTN_mention.sub(settings.SLO_MENTION_PLACEHOLDER, text)
+        mentions = src.settings.PTN_mention.findall(text)
+        text = src.settings.PTN_mention.sub(src.settings.SLO_MENTION_PLACEHOLDER, text)
         # URLs might be case sensitive
-        urls = settings.PTN_url.findall(text)
-        text = settings.PTN_url.sub(settings.SLO_URL_PLACEHOLDER, text)
+        urls = src.settings.PTN_url.findall(text)
+        text = src.settings.PTN_url.sub(src.settings.SLO_URL_PLACEHOLDER, text)
 
-        text = settings.PTN_elongation.sub(r'\1\1\1', text)
+        text = src.settings.PTN_elongation.sub(r'\1\1\1', text)
         text = text.lower()
 
-        text = settings.PTN_year.sub('slo_year', text)
-        text = settings.PTN_time.sub('slo_time', text)
-        text = settings.PTN_cash.sub('slo_cash', text)
-        text = settings.PTN_hash.sub('slo_hash', text)
+        text = src.settings.PTN_year.sub('slo_year', text)
+        text = src.settings.PTN_time.sub('slo_time', text)
+        text = src.settings.PTN_cash.sub('slo_cash', text)
+        text = src.settings.PTN_hash.sub('slo_hash', text)
 
         # put back Twitter specific tokens
         for url in urls:
-            text = text.replace(settings.SLO_URL_PLACEHOLDER, url, 1)
+            text = text.replace(src.settings.SLO_URL_PLACEHOLDER, url, 1)
         for mention in mentions:
-            text = text.replace(settings.SLO_MENTION_PLACEHOLDER, mention, 1)
+            text = text.replace(src.settings.SLO_MENTION_PLACEHOLDER, mention, 1)
 
     except:
         logger.error('pre-precessing error on: %s; %s", text, type(text)')
@@ -63,8 +60,8 @@ def post_process_text(text: str) -> str:
 
     This does not touch hashtags and cashtags because treating them as different words will work for our task.
     """
-    text = settings.PTN_mention.sub(r'slo_mention', text)
-    text = settings.PTN_url.sub(r'slo_url', text)
+    text = src.settings.PTN_mention.sub(r'slo_mention', text)
+    text = src.settings.PTN_url.sub(r'slo_url', text)
     return text
 
 
@@ -86,14 +83,13 @@ def save_datasets(data_frame: pd.DataFrame, filepath: str, separate_companies: b
     """This function saves the tokenized datasets, one for each company or
     one for all the companies combined.
     """
-    csv_filename = f'{filepath}_norm.csv'
-    data_frame.to_csv(csv_filename, index=False)
-    logger.info('\t\t%s - %s items', csv_filename, data_frame.shape[0])
+    data_frame.to_csv(filepath, index=False)
+    logger.info('\t\tsaved %s items to %s', data_frame.shape[0], filepath)
     if separate_companies:
         for company_name, group in data_frame.groupby('company'):
-            csv_filename = f'{filepath}-{company_name}_norm.csv'
-            group.to_csv(csv_filename, index=False, quoting=csv.QUOTE_NONNUMERIC)
-            logger.info('\t\t%s - %s items', csv_filename, group.shape[0])
+            filepath = f'{filepath}-{company_name}_norm.csv'
+            group.to_csv(filepath, index=False, quoting=csv.QUOTE_NONNUMERIC)
+            logger.info('\t\tsaved %s items to %s', group.shape[0], filepath)
 
 
 def fix_for_tagger(texts):
@@ -104,15 +100,18 @@ def fix_for_tagger(texts):
     return [text if text != '' else 'slo_empty_text' for text in texts]
 
 
-def main(
-    csv_data_filepath: str='dataset.csv',
-    tweet_column_name: str='text',
-    profile_column_name='user_description',
-    encoding: str='utf-8',
-    separate_companies: bool=False,
-    post_process: bool=True,
-    logging_level: int=logging.INFO
-    ) -> None:
+def dataset_normalizer(
+        dataset_path='.',
+        dataset_filename='dataset.csv',
+        tweet_column_name: str='text',
+        profile_column_name='user_description',
+        encoding: str='utf-8',
+        separate_companies: bool=False,
+        post_process: bool=False,
+        logging_level: int=logging.INFO,
+        logging_filename='dataset_normalizer_log.txt',
+        logging_mode='w'
+        ) -> None:
     """This tool loads the preprocessed CSV-formatted tweets from the given
     filepath, normalizes the field values, and saves the results in a new
     filename (.csv). The normalization consists of:
@@ -135,37 +134,49 @@ def main(
             important for some tasks rather than others, e.g.: ML model input;
             creating word embeddings.
 
-    # Args
-
-    csv_data_filepath:
-        CSV or JSON file path
-        (default: 'dataset.csv')
-    tweet_column_name:
-        the column name of tweets in the input csv
-        (default: 'text')
-    profile_column_name:
-        the column name of author profile description in the input csv
-        (default: 'user_description')
-    encoding:
-        file character encoding
-        (default: 'utf-8')
-    separate_companies:
-        if True, separate files grouped by company name are produced
-        (default: False)
-    post_process:
-        if True, abstract mentions and URLs
-        (default: True)
-    logging_level
-        the level of logging to use
-        (default: logging.INFO)
+    Keyword Arguments
+        :param dataset_path: the root system path to the target/destination files
+            (default: .)
+        :param dataset_filename: the name of the dataset file
+            (default: dataset.csv)
+        tweet_column_name:
+            the column name of tweets in the input csv
+            (default: 'text')
+        profile_column_name:
+            the column name of author profile description in the input csv
+            (default: 'user_description')
+        encoding:
+            file character encoding
+            (default: 'utf-8')
+        separate_companies:
+            if True, separate files grouped by company name are produced
+            (default: False)
+        post_process:
+            if True, abstract mentions and URLs
+            (default: False)
+        logging_level
+            the level of logging to use
+            (default: logging.INFO)
+        logging_filename -- the name of the log file
+            (default: 'dataset_normalizer_log.txt')
+        logging_mode -- the mode to use when writing to the log file
+            (default: 'w')
     """
-    logging.basicConfig(level=logging_level, format='%(message)s')
-    logger.info('normalizing tweets')
+    logging.basicConfig(
+        level=logging_level,
+        format='%(message)s',
+        filename=Path(dataset_path, logging_filename),
+        filemode=logging_mode
+        )
+    logger.info('normalizing dataset...')
 
-    filename, extension = csv_data_filepath.split('.')
-    data_frame = read_dataset(csv_data_filepath, extension, encoding)
+    dataset_filepath = Path(dataset_path, dataset_filename)
+    filename, extension = dataset_filename.split('.')
+    output_filepath = Path(dataset_path, f'{filename}_norm.csv')
 
-    logger.info('\tpre-processing tweets and profile descriptions...')
+    data_frame = read_dataset(dataset_filepath, extension, encoding)
+
+    logger.info('\tpre-processing tweet/profile texts...')
     tweets = data_frame[tweet_column_name].apply(preprocess_text)
     profiles = data_frame[profile_column_name].apply(preprocess_text)
     data_frame = data_frame.drop(
@@ -190,10 +201,8 @@ def main(
     logger.info('\tsaving normalized tweets and profiles:')
     data_frame['tweet_norm'] = tweets
     data_frame['profile_norm'] = profiles
-    save_datasets(data_frame, filename, separate_companies)
+    save_datasets(data_frame, output_filepath, separate_companies)
 
 
 if __name__ == '__main__':
-    Fire(main)
-    # Example invocation (CSIRO, 2018):
-    # python dataset_normalizer.py --csv_data_filepath=/media/hdd_2/slo/stance/datasets/dataset.csv --post_process
+    Fire(dataset_normalizer)
