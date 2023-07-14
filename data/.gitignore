@@ -1,5 +1,7 @@
 /dataset.json
 /dataset.csv
 /dataset_norm.csv
-/dataset_norm_tokens.txt
 /glove.6B.50d.txt
+/dataset_norm.txt
+/dataset_norm.txt
+/dataset_norm.txt

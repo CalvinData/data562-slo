@@ -1,0 +1,5 @@
+outs:
+- md5: 35b249bd4ce8fa1df8bc5111faa0c4bf
+  size: 41678522
+  hash: md5
+  path: dataset_norm.txt

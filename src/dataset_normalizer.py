@@ -1,5 +1,5 @@
 """
-This module normalizes tweets for machine learning input.
+This module normalizes/tokenizes tweets/profiles for machine learning input.
 See main() for the details.
 """
 import csv
@@ -8,14 +8,15 @@ import logging
 from pathlib import Path
 from fire import Fire
 import pandas as pd
+from nltk.tokenize import TweetTokenizer
 
 import src.settings
 
 logger = logging.getLogger(__name__)
 
 
-def preprocess_text(text: str) -> str:
-    """This function normalizes the tweet field values."""
+def normalize_tokenize_text(text: str) -> str:
+    """This function normalizes/tokenizes the tweet field values."""
     try:
         text = html.unescape(text)
         text = src.settings.PTN_rt.sub('', text)
@@ -44,6 +45,9 @@ def preprocess_text(text: str) -> str:
         for mention in mentions:
             text = text.replace(src.settings.SLO_MENTION_PLACEHOLDER, mention, 1)
 
+        # Tokenize the text.
+        text = ' '.join(TweetTokenizer().tokenize(text))
+
     except:
         logger.error('pre-precessing error on: %s; %s", text, type(text)')
         raise
@@ -58,7 +62,8 @@ def post_process_text(text: str) -> str:
 
     - abstract mentions and URLs
 
-    This does not touch hashtags and cashtags because treating them as different words will work for our task.
+    This does not touch hashtags and cashtags because treating them as different words 
+    will work for our task.
     """
     text = src.settings.PTN_mention.sub(r'slo_mention', text)
     text = src.settings.PTN_url.sub(r'slo_url', text)
@@ -113,24 +118,24 @@ def dataset_normalizer(
     """This tool loads the preprocessed CSV-formatted tweets from the given
     filepath, normalizes the field values, and saves the results in a new
     filename (.csv). The normalization consists of:
-
-    - RT sign (`RT @mention: `)
-    - Shrink elongations:
-        - letters -- waaaaaay -> waaay
-        - signs   -- !!!!!!!! -> !!!
-    - Downcase all letters
-    - Replace newline (and tab) with a space
-    - URLs:
-        - Remove truncated URL fragments.
-        - Add space between [.,?!] and 'http'.
-    - Fix HTML escaped tokens
-    - Abstract numeric values:
-        - 1964  -> year
-        - 16:32 -> time
-        - $12   -> money
-        - We don't abstract mentions or URLs by default because they may be more
-            important for some tasks rather than others, e.g.: ML model input;
-            creating word embeddings.
+        - RT sign (`RT @mention: `)
+        - Shrink elongations:
+            - letters -- waaaaaay -> waaay
+            - signs   -- !!!!!!!! -> !!!
+        - Downcase all letters
+        - Replace newline (and tab) with a space
+        - URLs:
+            - Remove truncated URL fragments.
+            - Add space between [.,?!] and 'http'.
+        - Fix HTML escaped tokens
+        - Abstract numeric values:
+            - 1964  -> year
+            - 16:32 -> time
+            - $12   -> money
+            - We don't abstract mentions or URLs by default because they may be more
+                important for some tasks rather than others, e.g.: ML model input;
+                creating word embeddings.
+    Tokenization is done using the NLTK TweetTokenizer.
 
     Keyword Arguments
         :param dataset_path: the root system path to the target/destination files
@@ -160,6 +165,12 @@ def dataset_normalizer(
         logging_mode -- the mode to use when writing to the log file
             (default: 'w')
     """
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s',
+        filename=__name__ + '.log',
+        filemode='a'
+        )
     logger.info('normalizing dataset...')
 
     _, extension = input_filename.split('.')
@@ -168,9 +179,9 @@ def dataset_normalizer(
 
     data_frame = read_dataset(input_filepath, extension, encoding)
 
-    logger.info('\tpre-processing tweet/profile texts...')
-    tweets = data_frame[tweet_column_name].apply(preprocess_text)
-    profiles = data_frame[profile_column_name].apply(preprocess_text)
+    logger.info('\tnormalizing/tokenizing tweet/profile texts...')
+    tweets = data_frame[tweet_column_name].apply(normalize_tokenize_text)
+    profiles = data_frame[profile_column_name].apply(normalize_tokenize_text)
     data_frame = data_frame.drop(
         columns=[tweet_column_name, profile_column_name]
         )

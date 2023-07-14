@@ -37,7 +37,7 @@ dataset_preprocessor(
     output_filename=FILENAME_BASE + '.csv'
     )
 
-# 2. Normalize pre-processed tweet dataset.
+# 2. Normalize/tokenize pre-processed tweet dataset.
 dataset_normalizer(
     dataset_path=DATA_DIR,
     input_filename=FILENAME_BASE + '.csv',
@@ -48,8 +48,10 @@ dataset_normalizer(
 token_extractor(
     dataset_path=DATA_DIR,
     input_filename=FILENAME_BASE + '_norm.csv',
-    output_filename=FILENAME_BASE + '_norm_tokens.csv'
+    output_filename=FILENAME_BASE + '_norm.txt'
     )
+
+
 
 print(f'See the log output: {LOG_FILEPATH}')
 # grep "\(processed [0-9]* records\|saved\)" __main__.log

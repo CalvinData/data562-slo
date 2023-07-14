@@ -29,6 +29,7 @@
         "runtagger",
         "seaborn",
         "shardulm",
+        "tokenizes",
         "toolsai"
     ]
 }

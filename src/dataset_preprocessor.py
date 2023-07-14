@@ -298,6 +298,12 @@ def dataset_preprocessor(
         logging_mode -- the mode to use when writing to the log file
             (default: 'w')
     """
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s',
+        filename=__name__ + '.log',
+        filemode='a'
+        )
     logger.info('pre-processing dataset...')
 
     input_filepath = Path(dataset_path, input_filename)
