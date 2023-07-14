@@ -1,46 +1,41 @@
+"""
+This module creates a randomly sampled testset in CSV format for manual coding.
+See main() for the details.
+"""
 import logging
-import datetime
-import fire
-import requests
-import re
 from pathlib import Path
-
-import numpy as np
+import requests
+import fire
 import pandas as pd
-from textblob import TextBlob
+from src.settings import PTN_mention
+
+logger = logging.getLogger(__name__)
 
 
-# Regex for Twitter mentions (e.g., @kvlinden)
-mention_re = re.compile('\s*@\w{1,15}\s*')
-
-
-def load_prepared_dataset(path_filename_base, encoding):
-    """This function loads an existing dataset."""
-    full_path = f'{path_filename_base}.csv'
-    logging.info(f'\tloading dataset file: {full_path}')
-    # Use the python engine because it is more complete (but slower).
-    return pd.read_csv(full_path, encoding=encoding, engine='python')
-
-
-def create_coding_set(path_filename_base, df, size, company_names, encoding):
+def create_save_coding_set(output_filepath, data_frame, size, company_names, encoding):
     """This function creates coding sets and stores them in separate files."""
-    file_handler = logging.FileHandler(f'{path_filename_base}.txt', mode='w')
-    logging.getLogger().addHandler(file_handler)
-    logging.info(f'building the coding set\n\t{datetime.datetime.now()}')
     coding_set = pd.DataFrame()
-    for name, group in df.groupby('company'):
-        if company_names == None or name in company_names:
-            logging.info(f'\t{name} : {size} entries')
-            coding_set = coding_set.append(get_sample_tweets(group, size))
+
+    for name, group in data_frame.groupby('company'):
+        if (company_names is None) or (name in company_names):
+            logging.info('\t{name} : {size} entries')
+            coding_set = pd.concat(
+                [coding_set, get_sample_tweets(group, size)],
+                ignore_index=True
+                )
+
     coding_columns = ['stance', 'confidence', 'value']
-    data_columns = ['id', 'tweet_url', 'company', 'screen_name', 'text', 'user_description']
-    for c in coding_columns:
-        coding_set[c] = '??'
-    coding_set.to_csv(f'{path_filename_base}.csv',
-                      columns= coding_columns + data_columns,
-                      encoding=encoding
-                      )
-    logging.getLogger().removeHandler(file_handler)
+    data_columns = ['id', 'tweet_url', 'company', 'user_screen_name',
+                    'tweet_norm', 'profile_norm']
+    for column in coding_columns:
+        coding_set[column] = '??'
+
+    coding_set.to_csv(
+        output_filepath,
+        columns= coding_columns + data_columns,
+        encoding=encoding,
+        index=False
+        )
 
 
 def get_sample_tweets(group, size):
@@ -55,35 +50,32 @@ def get_sample_tweets(group, size):
             # Accept original tweets.
             (group['retweeted']) &
             # Accept empty or small hashtag lists.
-            ((group['hashtags'].str.len().isnull()) |
-             (group['hashtags'].str.len() < 3)) &
-            # (SLO_Dataset.get_string_list_len(group['hashtags']) < 6) &
-            # Accept tweets coded as English by either Twitter or TextBlob.
-            ((group['lang'].str.startswith('en')) |
-             (group['language_textblob'].str.startswith('en')))
+            (group['hashtags'].str.len().isnull()) | (group['hashtags'].str.len() < 3)
             ].sample(1)
-        sample_tweet['tweet_url'] = sample_tweet.id.apply(
-            create_tweet_url
-        )
+        sample_tweet['tweet_url'] = sample_tweet.id.apply(create_tweet_url)
         # Skip this tweet if it is deleted/invalid or repeated.
         if check_tweet_accessibility(sample_tweet['tweet_url'].values[0]) and \
                 not sample_tweet['id'].values[0] in current_ids:
             # Add this usable tweet with coding text to the coding set.
-            sample_tweet['tweet_to_code'] = sample_tweet['text'].apply(
-                remove_prepended_mentions)
+            sample_tweet['tweet_to_code'] = sample_tweet['tweet_norm'].apply(
+                remove_prepended_mentions
+                )
             sample_tweet['stance'] = ''
             sample_tweet['confidence'] = ''
-            group_coding_set = group_coding_set.append(sample_tweet)
+            group_coding_set = pd.concat(
+                [group_coding_set, sample_tweet],
+                ignore_index=True
+                )
             current_ids.add(sample_tweet['id'].values[0])
             # Show progress in finding appropriate tweets.
             #     Useful if there are relatively few appropriate tweets
-            # logging.info(f'\t\t{SLO_Dataset.get_size(group_coding_set)}')
+            # logging.info('\t\t%s', SLO_Dataset.get_size(group_coding_set))
     return group_coding_set
 
 
-def get_size(df):
+def get_size(data_frame):
     """This function gets the number of rows in the given dataframe."""
-    return df.shape[0]
+    return data_frame.shape[0]
 
 
 def check_tweet_accessibility(tweet_url):
@@ -93,19 +85,20 @@ def check_tweet_accessibility(tweet_url):
     Arguments:
         tweet_url -- the URL for the tweet
     """
-    response = requests.get(tweet_url)
+    response = requests.get(tweet_url, timeout=5)
     # Accessible tweets give HTTP 200 and include the screen name and tweet
     # ID in the URL. Inaccessible tweets can give 404 responses or redirect
     # to account/suspended.
     return response.status_code == 200 and \
-           response.url.find('suspended') == -1
+        response.url.find('suspended') == -1
 
 
 def remove_prepended_mentions(tweet):
+    """Removes mentions that appear at the beginning of the tweet"""
     start = 0
     while True:
-        match = mention_re.match(tweet, start)
-        if match == None:
+        match = PTN_mention.match(tweet, start)
+        if match is None:
             break
         start = match.end()
     return tweet[start:]
@@ -118,15 +111,15 @@ def create_tweet_url(tweet_id):
     return f'https://twitter.com/-/status/{tweet_id}'
 
 
-def main(data_path='.',
-         path='.',
-         dataset_filename_base='dataset',
-         coding_filename_base='coding',
-         size=10,
-         company_names=None,
-         encoding='utf-8',
-         logging_level=logging.INFO,
-         ):
+def coding_processor(
+    dataset_path='.',
+    input_filename='dataset_norm.csv',
+    output_filename='dataset_coding.csv',
+    size=10,
+    company_names=None,
+    encoding='utf-8',
+    logging_level=logging.INFO
+    ):
     """This method selects a random set of tweets to code for each company of
     the given size. The tweets and a log of the creation process are stored
     in files using the given filename (.csv and .txt respectively). It
@@ -134,9 +127,10 @@ def main(data_path='.',
     as follows:
 
     - A tweet_to_code column is added, which is the original tweet stripped of
-      leading mentions.
+        leading mentions.
     - A tweet_url column is added to give a direct Twitter URL for the tweet.
-    - Empty columns are added for stance and confidence.
+    - Empty columns are added for stance and confidence, to be filled in by
+        human coders.
 
     The produced CSV file will include long integers that Excel doesn't handle
     by default. To solve the problem, import the .csv file as shown here:
@@ -144,14 +138,12 @@ def main(data_path='.',
     http://techsupport.matomy.com/Reports/29830196/How-to-present-long-numbers-correctly-in-Excel-CSV-file.htm
 
     Keyword arguments:
-        data_path -- the system path from which to read the dataset
-            (default: './data')
-        path -- the system path to which to write the coding dataset files
+        dataset_path -- the system path from which to read the dataset
             (default: '.')
-        dataset_filename_base -- a base filename for the dataset file
-            (default: 'dataset')
-        coding_filename_base -- a base filename for the new coding set
-            (default: 'coding')
+        input_filename -- the name of dataset input file
+            (default: 'dataset_norm.csv')
+        output_filename -- the name for the new coding output file
+            (default: 'dataset_code.csv')
         size -- the number of coding set elements to sample for each company
             (default: 10)
         company_names -- a list of company names for which to collect samples
@@ -161,13 +153,27 @@ def main(data_path='.',
         logging_level -- the level of logging to use
             (default: logging.INFO)
     """
-    logging.basicConfig(level=logging_level, format='%(message)s')
-    df = load_prepared_dataset(Path(data_path) / dataset_filename_base, encoding)
-    create_coding_set(Path(path) / coding_filename_base, df, size, company_names, encoding)
+    logging.basicConfig(
+        level=logging_level,
+        format='%(asctime)s %(levelname)s %(message)s',
+        filename=__name__ + '.log',
+        filemode='a'
+        )
+    logger.info('extracting manual coding dataset...')
+
+    input_filepath = Path(dataset_path, input_filename)
+    output_filepath = Path(dataset_path, output_filename)
+
+    logging.info('\tloading dataset file: %s', input_filepath)
+    # Use the python engine because it is more complete (but slower).
+    data_frame = pd.read_csv(input_filepath, encoding=encoding, engine='python')
+
+    logging.info('\tbuilding and saving the coding set to: %s', output_filepath)
+    create_save_coding_set(output_filepath, data_frame, size, company_names, encoding)
 
 
 if __name__ == '__main__':
-    fire.Fire(main)
+    fire.Fire(coding_processor)
 
     # Example invocation:
     # python coding_processor.py --data_path=/media/hdd_2/slo/data/slo-tweets-20160101-20180304 --path='/media/hdd_2/slo/data/coding' --size=50 --company_names=['adani']

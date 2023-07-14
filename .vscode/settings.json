@@ -2,6 +2,8 @@
     "cSpell.words": [
         "adani",
         "Anson",
+        "astype",
+        "autocode",
         "autodocstring",
         "cashtags",
         "chunksize",
@@ -29,7 +31,9 @@
         "runtagger",
         "seaborn",
         "shardulm",
+        "testset",
         "tokenizes",
-        "toolsai"
+        "toolsai",
+        "trainset"
     ]
 }

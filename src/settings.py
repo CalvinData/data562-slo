@@ -11,7 +11,7 @@ neutral_usernames = [
     'couriermail', 'abcnews', 'skynewsaust', 'qanda'
     ]
 
-PTN_neutral_screennames = re.compile('|'.join(neutral_usernames))
+PTN_neutral_screen_names = re.compile('|'.join(neutral_usernames))
 
 PTN_company_usernames = re.compile('|'.join([
     'adaniaustralia',

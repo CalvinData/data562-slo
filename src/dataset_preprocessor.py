@@ -1,5 +1,11 @@
 """
 This module builds a dataset file from a JSON file of raw tweets.
+
+To make this work, we needed to:
+- Convert the raw JSON data UTF-8 (using iconv -f latin-1 -t utf-8).
+- Remove some UTF-8 characters that messed up Polyglot/Cld2
+    (for details, see dataset_preprocessor#remove_bad_chars.).
+
 See main() for the details.
 """
 import os
