@@ -34,6 +34,12 @@ RUN pip install pyicu \
     && pip install morfessor \
     && pip install polyglot
 
+# Add fastText.
+RUN cd /code \
+    && git clone https://github.com/facebookresearch/fastText.git \
+    && cd fastText \
+    && make
+
 # Add some development (only) tools.
 RUN echo "alias ll='ls -lahF'" >> /home/$USERNAME/.bashrc \
     && bash

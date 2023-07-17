@@ -1,6 +1,6 @@
 """
-This module builds a text file of tokens from the tweets and profile descriptions
-from a normalized dataset CSV file.
+This module builds a text file of tokens from the tweet texts and profile
+descriptions from a normalized dataset CSV file.
 See main() for the details.
 """
 import logging

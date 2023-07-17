@@ -5,3 +5,5 @@
 /dataset_norm.txt
 /dataset_code.csv
 /dataset_autocode.csv
+/dataset_wordvec_all100.bin
+/dataset_wordvec_all100.vec

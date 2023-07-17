@@ -1,0 +1,5 @@
+outs:
+- md5: 11bf2df2a744605b5d80c1ea9d0dc416
+  size: 27288043
+  hash: md5
+  path: dataset_wordvec_all100.vec
