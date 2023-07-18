@@ -15,7 +15,8 @@ def token_extractor(
         dataset_path='.',
         input_filename='dataset_norm.csv',
         output_filename='dataset_norm_tokens.txt',
-        encoding='utf-8'
+        encoding='utf-8',
+        logging_level=logging.INFO
         ):
     """This function extracts the raw text from the given tokenized dataset
     file. The text includes both the tweet text and the user profile
@@ -31,9 +32,11 @@ def token_extractor(
             (default: dataset_norm_tokens.csv)
         :param encoding: the file encoding
             (default: utf-8)
+        logging_level -- the level of logging to use
+            (default: logging.INFO)
     """
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging_level,
         format='%(asctime)s %(levelname)s %(message)s',
         filename=__name__ + '.log',
         filemode='a'

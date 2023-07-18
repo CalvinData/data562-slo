@@ -262,7 +262,8 @@ def dataset_preprocessor(
         encoding='utf-8',
         drop_irrelevant_tweets=True,
         keep_retweets=True,
-        add_company_datasets=False
+        add_company_datasets=False,
+        logging_level=logging.INFO
         ):
     """This tool loads the raw JSON-formatted tweets from the given
     filepath, does some general updates to the dataset items and saves
@@ -299,13 +300,9 @@ def dataset_preprocessor(
             (default: False)
         logging_level -- the level of logging to use
             (default: logging.INFO)
-        logging_filename -- the name of the log file
-            (default: 'dataset_preprocessor_log.txt')
-        logging_mode -- the mode to use when writing to the log file
-            (default: 'w')
     """
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging_level,
         format='%(asctime)s %(levelname)s %(message)s',
         filename=__name__ + '.log',
         filemode='a'

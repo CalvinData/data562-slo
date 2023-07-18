@@ -1,0 +1,6 @@
+outs:
+- md5: 416ec31a30a289c4771155bec699e079.dir
+  size: 357953
+  nfiles: 5
+  hash: md5
+  path: coding

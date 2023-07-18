@@ -3,15 +3,15 @@ This module creates a trainset with codes set automatically
 based on hard-coded rules.
 See main() for the details.
 """
-import sys
 import logging
 from pathlib import Path
 import re
 import fire
 import pandas as pd
 
-from src.settings import PTN_against, PTN_for, \
-    PTN_neutral_screen_names, PTN_company_usernames, company_list
+from src.settings import \
+    PTN_against, PTN_for, PTN_neutral_screen_names, \
+    PTN_company_usernames, company_list
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def main(
     output_filename='dataset_autocode.csv',
     testset_filename=None,
     encoding='utf-8',
-    logging_level: int = logging.INFO,
+    logging_level: int=logging.INFO,
     company_tweets=False
     ):
     """This function creates a auto-coded dataset using distance supervision,

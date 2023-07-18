@@ -113,7 +113,8 @@ def dataset_normalizer(
         profile_column_name: str='user_description',
         encoding: str='utf-8',
         separate_companies: bool=False,
-        post_process: bool=False
+        post_process: bool=False,
+        logging_level: int=logging.INFO
         ) -> None:
     """This tool loads the preprocessed CSV-formatted tweets from the given
     filepath, normalizes the field values, and saves the results in a new
@@ -160,13 +161,9 @@ def dataset_normalizer(
         logging_level
             the level of logging to use
             (default: logging.INFO)
-        logging_filename -- the name of the log file
-            (default: 'dataset_normalizer_log.txt')
-        logging_mode -- the mode to use when writing to the log file
-            (default: 'w')
     """
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging_level,
         format='%(asctime)s %(levelname)s %(message)s',
         filename=__name__ + '.log',
         filemode='a'

@@ -7,3 +7,5 @@
 /dataset_autocode.csv
 /dataset_wordvec_all100.bin
 /dataset_wordvec_all100.vec
+/model.pkl
+/coding
