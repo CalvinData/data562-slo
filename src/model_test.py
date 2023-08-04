@@ -49,7 +49,7 @@ def model_test(
     model_filepath = Path(dataset_path, model_filename)
 
     labels = set_labels(labels)
-    
+
     x_test, y_test = load_dataset(testset_filepath, labels, encoding)
 
     logger.info('\tloading model from %s', model_filepath)
