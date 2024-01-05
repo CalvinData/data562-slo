@@ -6,7 +6,7 @@ The project deployed a public-stance monitoring application what watched the Twi
 
 For details, see the project:
 
-- [Vision Statement](notebooks/vision.ipynb)
+- [Product/System Design](notebooks/product.ipynb)
 - [Time Tracker](https://app.clockify.me/workspaces/649f2bd325d4ee229253c053)
 - [Data Storage](https://drive.google.com/drive/u/1/folders/1te6TeLQ7Uq0-JzBbiBINytPkH7yCqy1b)
 - [EDA](notebooks/analysis.ipynb)
