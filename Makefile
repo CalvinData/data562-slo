@@ -1,8 +1,8 @@
 SHELL = /bin/bash
 # This makefile runs the pipeline that:
-# 1. Processes the raw dataset
-# 2. Builds the word vectorizations
-# 3. Trains/tests the model
+# 1. Processes the raw dataset (dataset.json)
+# 2. Builds the word vectorizations (dataset_wordvec_all100.*)
+# 3. Trains/tests the model (model.pkl)
 
 BASE_DIR := .
 DATA_DIR := $(BASE_DIR)/data
@@ -21,6 +21,9 @@ codesets: $(DATA_DIR)/$(NAME_BASE)_code.csv $(DATA_DIR)/$(NAME_BASE)_autocode.cs
 wordvecs: $(DATA_DIR)/$(NAME_BASE)_wordvec_all100.vec
 
 models: $(DATA_DIR)/model.pkl
+
+$(DATA_DIR)/$(NAME_BASE).json: $(DATA_DIR)/$(NAME_BASE).json.dvc
+	dvc pull
 
 $(DATA_DIR)/$(NAME_BASE).csv: $(DATA_DIR)/$(NAME_BASE).json
 	$(PYTHON) $(SRC_DIR)/dataset_preprocessor.py \
@@ -72,6 +75,7 @@ test: $(DATA_DIR)/model.pkl $(DATA_DIR)/coding/gold_20180514_majority.csv
 		--model_filename=model.pkl
 
 clean:
+	rm -f $(DATA_DIR)/$(NAME_BASE).json
 	rm -f $(DATA_DIR)/$(NAME_BASE).csv
 	rm -f $(DATA_DIR)/$(NAME_BASE)_norm.csv
 	rm -f $(DATA_DIR)/$(NAME_BASE)_norm.txt
@@ -80,4 +84,4 @@ clean:
 	rm -f $(DATA_DIR)/$(NAME_BASE)_wordvec_all100.vec
 	rm -f $(DATA_DIR)/$(NAME_BASE)_wordvec_all100.bin
 	rm -f $(DATA_DIR)/model.pkl
-	rm -r $(BASE_DIR)/__main__.log
+	rm -rf $(BASE_DIR)/__main__.log

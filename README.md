@@ -11,6 +11,6 @@ For details, see the project:
 - [Data Storage](https://drive.google.com/drive/u/1/folders/1te6TeLQ7Uq0-JzBbiBINytPkH7yCqy1b)
 - [EDA](notebooks/analysis.ipynb)
 
-To start the development container specified in `.devcontainer`, either create a Codespace on GitHub or run VSCode Command&rarr;&ldquo;Dev Container: Rebuild Container&rdquo; locally.
+It's better to run this system in the development container because it configures the tools properly. To start the development container specified in `.devcontainer`, either create a Codespace on GitHub or run VSCode Command&rarr;&ldquo;Dev Container: Rebuild Container&rdquo; locally.
 
 The sample dataset is a set of raw tweets on Australian mining companies collected from 2010-Jan-1 through 2018-May-10 (see [dataset.json](data/dataset.json)).
