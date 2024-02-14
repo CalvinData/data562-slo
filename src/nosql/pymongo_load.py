@@ -6,7 +6,6 @@ See `pymongo_utilities.py` for details.
 """
 import pymongo_utilities
 import pandas as pd
-import numpy as np
 
 
 def write_collection(database, collection_name, df):
