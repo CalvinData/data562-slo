@@ -1,0 +1,5 @@
+outs:
+- md5: 3f0481ea6625050736e727cf2455742c
+  size: 4926
+  hash: md5
+  path: slo_tags.csv

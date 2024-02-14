@@ -1,0 +1,5 @@
+outs:
+- md5: 489d80572f259eded63753dfcd37aff3
+  size: 114756
+  hash: md5
+  path: slo_code.csv

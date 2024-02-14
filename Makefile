@@ -85,3 +85,10 @@ clean:
 	rm -f $(DATA_DIR)/$(NAME_BASE)_wordvec_all100.bin
 	rm -f $(DATA_DIR)/model.pkl
 	rm -rf $(BASE_DIR)/__main__.log
+
+# Don't use PHONEY; if you want to rebuild venv/., manually delete it first.
+venv:
+	python3.10 -m venv venv && \
+    source venv/bin/activate && \
+	pip install pip setuptools wheel && \
+	pip install -r requirements.txt
