@@ -8,7 +8,7 @@ Notes:
 - Installed 'pymongo[srv]' as specified in the guide.
 - TODO: Auto-set the user ID/password in the production environment.
     See: https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces
-- I had to add my IP address to the MongoDB cloud database's "Network Access" 
+- I had to add my IP address to the MongoDB cloud database's "Network Access"
     settings, which worked for multiple machines.
 """
 import os
