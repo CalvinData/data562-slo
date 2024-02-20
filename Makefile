@@ -12,14 +12,11 @@ NAME_BASE := dataset
 FASTTEXT := /code/fastText/fasttext
 PYTHON := PYTHONPATH=$(BASE_DIR) python
 
+.PHONY: all, datasets, codesets, wordvecs, models
 ALL: datasets codesets wordvecs models
-
 datasets: $(DATA_DIR)/$(NAME_BASE)_norm.txt
-
 codesets: $(DATA_DIR)/$(NAME_BASE)_code.csv $(DATA_DIR)/$(NAME_BASE)_autocode.csv
-
 wordvecs: $(DATA_DIR)/$(NAME_BASE)_wordvec_all100.vec
-
 models: $(DATA_DIR)/model.pkl
 
 $(DATA_DIR)/$(NAME_BASE).json: $(DATA_DIR)/$(NAME_BASE).json.dvc
@@ -68,12 +65,14 @@ $(DATA_DIR)/model.pkl: $(DATA_DIR)/$(NAME_BASE)_autocode.csv $(DATA_DIR)/$(NAME_
 		--word_vectors_filename=$(NAME_BASE)_wordvec_all100.vec \
 		--model_filename=model.pkl
 
+.PHONY: test
 test: $(DATA_DIR)/model.pkl $(DATA_DIR)/coding/gold_20180514_majority.csv
 	$(PYTHON) $(SRC_DIR)/model_test.py \
 		--dataset_path=$(DATA_DIR) \
 		--testset_filename=coding/gold_20180514_majority.csv \
 		--model_filename=model.pkl
 
+.PHONY: clean
 clean:
 	rm -f $(DATA_DIR)/$(NAME_BASE).json
 	rm -f $(DATA_DIR)/$(NAME_BASE).csv
@@ -86,10 +85,9 @@ clean:
 	rm -f $(DATA_DIR)/model.pkl
 	rm -rf $(BASE_DIR)/__main__.log
 
-# Don't use PHONY; if you want to rebuild venv/., manually delete it first.
-# The && runs the activate and following commands in the same shell.
+# This is used locally only, not in a container.
 venv:
-	python3.10 -m venv venv
-    source venv/bin/activate && \
+	python3.10 -m venv venv && \
+	source venv/bin/activate && \
 	pip install pip setuptools wheel && \
 	pip install -r requirements.txt
