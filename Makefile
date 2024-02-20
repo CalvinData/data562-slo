@@ -86,9 +86,10 @@ clean:
 	rm -f $(DATA_DIR)/model.pkl
 	rm -rf $(BASE_DIR)/__main__.log
 
-# Don't use PHONEY; if you want to rebuild venv/., manually delete it first.
+# Don't use PHONY; if you want to rebuild venv/., manually delete it first.
+# The && runs the activate and following commands in the same shell.
 venv:
-	python3.10 -m venv venv && \
+	python3.10 -m venv venv
     source venv/bin/activate && \
 	pip install pip setuptools wheel && \
 	pip install -r requirements.txt
