@@ -35,7 +35,7 @@ print(records_df)
 #   - `"id": 1` returns the title "id".
 #   - `"_id": 0` gets rid of the default inclusion of the surrogate `_id`.
 records = code_collection.aggregate([
-    { "$project": { "id": 1, "tweet_url": 1, "_id": 0 } }
+    {"$project": {"id": 1, "tweet_url": 1, "_id": 0}}
 ])
 records_df = DataFrame(records)
 print(records_df)
@@ -50,8 +50,8 @@ print(records_df)
 #       1. select (i.e., get records for company Adani)
 #       2. project (i.e., get columns: id, company, tweet_norm)
 records = code_collection.aggregate([
-    { "$match": { "company": { "$eq": "adani" } } },
-    { "$project": { "id": 1, "company": 1, "tweet_norm": 1, "_id": 0} }
+    {"$match": {"company": {"$eq": "adani"}}},
+    {"$project": {"id": 1, "company": 1, "tweet_norm": 1, "_id": 0}}
 ])
 records_df = DataFrame(records)
 print(records_df)
@@ -69,9 +69,9 @@ print(records_df)
 #       2. group (by company, and compute aggregate sum)
 #       3. sort (by the aggregate sum, in descending order)
 records = code_collection.aggregate([
-    { "$project": { "company": 1, "_id": 0} },
-    { "$group": { "_id": "$company", "count": { "$sum": 1 } } },
-    { "$sort": { "count": -1 } }
+    {"$project": {"company": 1, "_id": 0}},
+    {"$group": {"_id": "$company", "count": {"$sum": 1}}},
+    {"$sort": {"count": -1}}
 ])
 records_df = DataFrame(records)
 print(records_df)
@@ -85,18 +85,18 @@ print(records_df)
 # - This feels pretty manual, cf.
 #       [DBTG](https://en.wikipedia.org/wiki/Data_Base_Task_Group), circa 1967
 records = code_collection.aggregate([
-    { "$lookup": {
+    {"$lookup": {
         "from": "slo_tags",
         "localField": "id",
         "foreignField": "id",
         "as": "tag_document"
-    } },
-    { "$project": {
+        }},
+    {"$project": {
         "id": 1,
         "company": 1,
         "tag_document.stance": 1,
         "_id": 0
-    } }
+        }}
 ])
 records_df = DataFrame(records)
 print(records_df)
